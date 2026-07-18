@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lillian's Letterbox</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Karla:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #241C33;
+    --night: #1B2A3D;
+    --night-deep: #131F2E;
+    --parchment: #F2E8D9;
+    --parchment-soft: #EADFCB;
+    --gold: #D8A438;
+    --gold-deep: #B8852A;
+    --rose: #D97A93;
+    --rose-deep: #B85A73;
+    --success: #4E8C6E;
+    --error: #C1502E;
+    --radius: 10px;
+    --shadow: 0 12px 30px rgba(19, 31, 46, 0.35);
+  }
+
+  * { box-sizing: border-box; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  html, body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(circle at 20% 0%, #24384f 0%, var(--night) 45%, var(--night-deep) 100%);
+    color: var(--ink);
+    font-family: 'Karla', sans-serif;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 90px;
+  }
+
+  h1, h2, h3 { font-family: 'Fraunces', serif; margin: 0; }
+
+  .hidden { display: none !important; }
+
+  /* ---------- Guest: code entry ---------- */
+  .letterbox-frame {
+    width: 100%;
+    max-width: 420px;
+    background: var(--parchment);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 40px 32px 32px;
+    margin-top: 6vh;
+    position: relative;
+    overflow: hidden;
+    animation: riseIn 0.6s ease-out;
+  }
+
+  .letterbox-frame::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--gold), var(--rose), var(--gold));
+  }
+
+  .stamp {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 18px;
+    border: 2px dashed var(--gold-deep);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gold-deep);
+    font-family: 'Fraunces', serif;
+    font-size: 26px;
+    transform: rotate(-4deg);
+  }
+
+  .letterbox-frame h1 {
+    text-align: center;
+    font-size: 30px;
+    font-weight: 600;
+    color: var(--night-deep);
+  }
+
+  .tagline {
+    text-align: center;
+    color: #6B5F4E;
+    font-size: 14.5px;
+    margin: 10px 0 26px;
+  }
+
+  #codeForm label {
+    display: block;
+    font-size: 12.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #6B5F4E;
+    margin-bottom: 8px;
+  }
+
+  #codeInput {
+    width: 100%;
+    font-family: 'Space Mono', monospace;
+    font-size: 18px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 14px 16px;
+    border: 2px solid var(--parchment-soft);
+    background: #fff;
+    border-radius: 6px;
+    color: var(--night-deep);
+    text-align: center;
+  }
+
+  #codeInput:focus {
+    outline: 3px solid var(--gold);
+    outline-offset: 1px;
+    border-color: var(--gold);
+  }
+
+  .primary-btn {
+    width: 100%;
+    margin-top: 18px;
+    padding: 14px 16px;
+    border: none;
+    border-radius: 6px;
+    background: var(--night-deep);
+    color: var(--parchment);
+    font-family: 'Karla', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+
+  .primary-btn:hover { background: var(--night); transform: translateY(-1px); }
+  .primary-btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+  .error {
+    color: var(--error);
+    font-size: 13.5px;
+    text-align: center;
+    margin-top: 14px;
+  }
+
+  /* ---------- Guest: video view ---------- */
+  #videosView {
+    width: 100%;
+    max-width: 560px;
+    margin-top: 6vh;
+    animation: riseIn 0.5s ease-out;
+  }
+
+  #backBtn {
+    background: none;
+    border: none;
+    color: var(--parchment);
+    font-family: 'Karla', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    opacity: 0.8;
+    padding: 6px 0;
+    margin-bottom: 10px;
+  }
+  #backBtn:hover { opacity: 1; }
+  #backBtn:focus-visible { outline: 2px solid var(--gold); }
+
+  #recipientHeading {
+    color: var(--parchment);
+    font-size: 26px;
+    font-weight: 600;
+    margin-bottom: 22px;
+    text-align: center;
+  }
+
+  .postcard-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .postcard {
+    background: var(--parchment);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    padding: 18px;
+    position: relative;
+  }
+
+  .postcard:nth-child(odd) { transform: rotate(-0.6deg); }
+  .postcard:nth-child(even) { transform: rotate(0.6deg); }
+
+  .postcard-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 18px;
+    color: var(--night-deep);
+    margin: 0 0 4px;
+  }
+
+  .postcard-date {
+    font-size: 12.5px;
+    color: #8A7A5F;
+    margin-bottom: 12px;
+  }
+
+  .postcard-media {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #111;
+  }
+
+  .postcard-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    cursor: pointer;
+  }
+
+  .play-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: rgba(19, 31, 46, 0.15);
+  }
+
+  .play-overlay .triangle {
+    width: 0; height: 0;
+    border-top: 14px solid transparent;
+    border-bottom: 14px solid transparent;
+    border-left: 22px solid var(--parchment);
+    margin-left: 5px;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+  }
+
+  .postcard-media iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  .empty-state {
+    color: var(--parchment);
+    text-align: center;
+    opacity: 0.85;
+    padding: 30px 10px;
+  }
+
+  @keyframes riseIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ---------- Footer / admin entry ---------- */
+  footer {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    display: flex;
+    justify-content: center;
+    padding: 14px;
+  }
+
+  #adminToggle {
+    background: none;
+    border: none;
+    color: rgba(242, 232, 217, 0.35);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    padding: 6px 10px;
+  }
+  #adminToggle:hover { color: rgba(242, 232, 217, 0.7); }
+  #adminToggle:focus-visible { outline: 2px solid var(--gold); }
+
+  /* ---------- Modals ---------- */
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(19, 31, 46, 0.72);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 10;
+  }
+
+  .modal-content {
+    background: var(--parchment);
+    border-radius: var(--radius);
+    padding: 28px 26px;
+    width: 100%;
+    max-width: 420px;
+    max-height: 88vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow);
+  }
+
+  .modal-content h3 {
+    font-size: 20px;
+    margin-bottom: 18px;
+    color: var(--night-deep);
+  }
+
+  .modal-content label {
+    display: block;
+    font-size: 12.5px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #6B5F4E;
+    margin: 14px 0 6px;
+  }
+
+  .modal-content input,
+  .modal-content select {
+    width: 100%;
+    padding: 11px 12px;
+    border: 2px solid var(--parchment-soft);
+    background: #fff;
+    border-radius: 6px;
+    font-family: 'Karla', sans-serif;
+    font-size: 14.5px;
+    color: var(--night-deep);
+  }
+
+  .modal-content input:focus,
+  .modal-content select:focus {
+    outline: 3px solid var(--gold);
+    outline-offset: 1px;
+    border-color: var(--gold);
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 22px;
+  }
+
+  .secondary-btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 6px;
+    border: 2px solid var(--night-deep);
+    background: transparent;
+    color: var(--night-deep);
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .secondary-btn:hover { background: rgba(36, 28, 51, 0.06); }
+  .secondary-btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+  .modal-actions .primary-btn { margin-top: 0; }
+
+  #adminAddStatus {
+    font-size: 13.5px;
+    margin-top: 14px;
+    text-align: center;
+  }
+  #adminAddStatus.success { color: var(--success); }
+  #adminAddStatus.error { color: var(--error); }
+
+  .field-hint {
+    font-size: 12px;
+    color: #8A7A5F;
+    margin-top: 6px;
+  }
+</style>
+</head>
+<body>
+
+  <section id="guestView">
+    <div class="letterbox-frame">
+      <div class="stamp">L</div>
+      <h1>Lillian's Letterbox</h1>
+      <p class="tagline">Every video message she's sent you, kept safe in one place.</p>
+      <form id="codeForm">
+        <label for="codeInput">Enter your code</label>
+        <input id="codeInput" type="text" autocomplete="off" placeholder="e.g. SUNSHINE7" />
+        <button type="submit" class="primary-btn">Open my letterbox</button>
+      </form>
+      <p id="guestError" class="error hidden"></p>
+    </div>
+  </section>
+
+  <section id="videosView" class="hidden">
+    <button id="backBtn">&larr; Try a different code</button>
+    <h2 id="recipientHeading"></h2>
+    <div id="videoList" class="postcard-stack"></div>
+  </section>
+
+  <footer>
+    <button id="adminToggle" type="button">Admin</button>
+  </footer>
+
+  <div id="adminLogin" class="modal hidden">
+    <div class="modal-content">
+      <h3>Admin</h3>
+      <label for="adminPassword">Password</label>
+      <input id="adminPassword" type="password" autocomplete="off" />
+      <p id="adminLoginError" class="error hidden"></p>
+      <div class="modal-actions">
+        <button id="adminCancelBtn" type="button" class="secondary-btn">Cancel</button>
+        <button id="adminLoginBtn" type="button" class="primary-btn">Log in</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="adminPanel" class="modal hidden">
+    <div class="modal-content">
+      <h3>Add a video</h3>
+
+      <label for="recipientSelect">Recipient</label>
+      <select id="recipientSelect"></select>
+
+      <div id="newRecipientFields" class="hidden">
+        <label for="newRecipientName">New recipient's name</label>
+        <input id="newRecipientName" placeholder="e.g. Grandma" />
+        <label for="newRecipientCode">New code for them</label>
+        <input id="newRecipientCode" placeholder="e.g. SUNSHINE7" style="text-transform:uppercase;">
+        <p class="field-hint">Give this code to the recipient so they can open their letterbox.</p>
+      </div>
+
+      <label for="youtubeUrlInput">YouTube link (unlisted)</label>
+      <input id="youtubeUrlInput" placeholder="https://youtu.be/..." />
+
+      <label for="videoTitleInput">Title</label>
+      <input id="videoTitleInput" placeholder="Pulled from YouTube automatically" />
+
+      <p id="adminAddStatus"></p>
+
+      <div class="modal-actions">
+        <button id="adminCloseBtn" type="button" class="secondary-btn">Close</button>
+        <button id="addVideoBtn" type="button" class="primary-btn">Add video</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ------- Set this to your deployed Apps Script Web App URL -------
+  const API_URL = 'https://script.google.com/macros/s/AKfycbyBqTSVSvJh3dklMhKshCqzNhXvgZq80w8F6_xrQ97iP-E4nV5XzM1cjvmnyJA7BEc/exec';
+
+  const guestView = document.getElementById('guestView');
+  const videosView = document.getElementById('videosView');
+  const codeForm = document.getElementById('codeForm');
+  const codeInput = document.getElementById('codeInput');
+  const guestError = document.getElementById('guestError');
+  const recipientHeading = document.getElementById('recipientHeading');
+  const videoList = document.getElementById('videoList');
+  const backBtn = document.getElementById('backBtn');
+
+  const adminToggle = document.getElementById('adminToggle');
+  const adminLogin = document.getElementById('adminLogin');
+  const adminPassword = document.getElementById('adminPassword');
+  const adminLoginBtn = document.getElementById('adminLoginBtn');
+  const adminCancelBtn = document.getElementById('adminCancelBtn');
+  const adminLoginError = document.getElementById('adminLoginError');
+
+  const adminPanel = document.getElementById('adminPanel');
+  const recipientSelect = document.getElementById('recipientSelect');
+  const newRecipientFields = document.getElementById('newRecipientFields');
+  const newRecipientName = document.getElementById('newRecipientName');
+  const newRecipientCode = document.getElementById('newRecipientCode');
+  const youtubeUrlInput = document.getElementById('youtubeUrlInput');
+  const videoTitleInput = document.getElementById('videoTitleInput');
+  const addVideoBtn = document.getElementById('addVideoBtn');
+  const adminCloseBtn = document.getElementById('adminCloseBtn');
+  const adminAddStatus = document.getElementById('adminAddStatus');
+
+  let sessionPassword = null;
+
+  function extractYouTubeId(url) {
+    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
+    return match ? match[1] : null;
+  }
+
+  // ---------- Guest: lookup code ----------
+  codeForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const code = codeInput.value.trim();
+    guestError.classList.add('hidden');
+    if (!code) return;
+
+    try {
+      const res = await fetch(`${API_URL}?action=lookup&code=${encodeURIComponent(code)}`);
+      const data = await res.json();
+
+      if (!data.success || !data.videos || data.videos.length === 0) {
+        guestError.textContent = "That code doesn't match anything yet. Double-check it, or ask Lillian for a new one.";
+        guestError.classList.remove('hidden');
+        return;
+      }
+
+      showVideos(data.recipient, data.videos);
+    } catch (err) {
+      guestError.textContent = "Something went wrong loading your letterbox. Please try again in a moment.";
+      guestError.classList.remove('hidden');
+    }
+  });
+
+  function showVideos(recipient, videos) {
+    recipientHeading.textContent = `${recipient}'s Letterbox`;
+    videoList.innerHTML = '';
+
+    videos.forEach((v) => {
+      const card = document.createElement('div');
+      card.className = 'postcard';
+      card.innerHTML = `
+        <p class="postcard-title">${escapeHtml(v.title || 'A message from Lillian')}</p>
+        <p class="postcard-date">${formatDate(v.dateAdded)}</p>
+        <div class="postcard-media">
+          <img src="https://img.youtube.com/vi/${v.youtubeId}/hqdefault.jpg" alt="" />
+          <div class="play-overlay" role="button" tabindex="0" aria-label="Play video">
+            <div class="triangle"></div>
+          </div>
+        </div>
+      `;
+      const media = card.querySelector('.postcard-media');
+      const overlay = card.querySelector('.play-overlay');
+      const play = () => {
+        media.innerHTML = `<iframe src="https://www.youtube.com/embed/${v.youtubeId}?autoplay=1" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+      };
+      overlay.addEventListener('click', play);
+      overlay.addEventListener('keypress', (e) => { if (e.key === 'Enter') play(); });
+      videoList.appendChild(card);
+    });
+
+    guestView.classList.add('hidden');
+    videosView.classList.remove('hidden');
+  }
+
+  backBtn.addEventListener('click', () => {
+    videosView.classList.add('hidden');
+    guestView.classList.remove('hidden');
+    codeInput.value = '';
+    codeInput.focus();
+  });
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d)) return dateStr;
+    return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  }
+
+  // ---------- Admin ----------
+  adminToggle.addEventListener('click', () => {
+    adminPassword.value = '';
+    adminLoginError.classList.add('hidden');
+    adminLogin.classList.remove('hidden');
+    adminPassword.focus();
+  });
+
+  adminCancelBtn.addEventListener('click', () => adminLogin.classList.add('hidden'));
+
+  adminLoginBtn.addEventListener('click', async () => {
+    const pw = adminPassword.value;
+    if (!pw) return;
+    try {
+      const res = await fetch(`${API_URL}?action=recipients&password=${encodeURIComponent(pw)}`);
+      const data = await res.json();
+      if (!data.success) {
+        adminLoginError.textContent = 'Wrong password.';
+        adminLoginError.classList.remove('hidden');
+        return;
+      }
+      sessionPassword = pw;
+      populateRecipients(data.recipients);
+      adminLogin.classList.add('hidden');
+      adminPanel.classList.remove('hidden');
+    } catch (err) {
+      adminLoginError.textContent = 'Could not reach the letterbox server.';
+      adminLoginError.classList.remove('hidden');
+    }
+  });
+
+  function populateRecipients(recipients) {
+    recipientSelect.innerHTML = '';
+    recipients.forEach((r) => {
+      const opt = document.createElement('option');
+      opt.value = r.code;
+      opt.textContent = r.recipient;
+      recipientSelect.appendChild(opt);
+    });
+    const newOpt = document.createElement('option');
+    newOpt.value = '__new__';
+    newOpt.textContent = '+ New recipient...';
+    recipientSelect.appendChild(newOpt);
+
+    if (recipients.length === 0) recipientSelect.value = '__new__';
+    toggleNewRecipientFields();
+  }
+
+  recipientSelect.addEventListener('change', toggleNewRecipientFields);
+
+  function toggleNewRecipientFields() {
+    if (recipientSelect.value === '__new__') {
+      newRecipientFields.classList.remove('hidden');
+    } else {
+      newRecipientFields.classList.add('hidden');
+    }
+  }
+
+  let oEmbedTimer = null;
+  youtubeUrlInput.addEventListener('input', () => {
+    clearTimeout(oEmbedTimer);
+    oEmbedTimer = setTimeout(fetchYouTubeTitle, 500);
+  });
+
+  async function fetchYouTubeTitle() {
+    const url = youtubeUrlInput.value.trim();
+    const id = extractYouTubeId(url);
+    if (!id) return;
+    try {
+      const res = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.title) videoTitleInput.value = data.title;
+    } catch (err) {
+      // Silent fail is fine here; admin can type the title manually.
+    }
+  }
+
+  addVideoBtn.addEventListener('click', async () => {
+    adminAddStatus.textContent = '';
+    adminAddStatus.className = '';
+
+    const id = extractYouTubeId(youtubeUrlInput.value.trim());
+    if (!id) {
+      adminAddStatus.textContent = "That doesn't look like a valid YouTube link.";
+      adminAddStatus.className = 'error';
+      return;
+    }
+
+    let code, recipient;
+    if (recipientSelect.value === '__new__') {
+      recipient = newRecipientName.value.trim();
+      code = newRecipientCode.value.trim().toUpperCase();
+      if (!recipient || !code) {
+        adminAddStatus.textContent = 'Enter both a name and a code for the new recipient.';
+        adminAddStatus.className = 'error';
+        return;
+      }
+    } else {
+      code = recipientSelect.value;
+      recipient = recipientSelect.options[recipientSelect.selectedIndex].textContent;
+    }
+
+    addVideoBtn.disabled = true;
+    adminAddStatus.textContent = 'Adding...';
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'addVideo',
+          password: sessionPassword,
+          code,
+          recipient,
+          youtubeId: id,
+          title: videoTitleInput.value.trim()
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        adminAddStatus.textContent = `Added to ${recipient}'s letterbox.`;
+        adminAddStatus.className = 'success';
+        youtubeUrlInput.value = '';
+        videoTitleInput.value = '';
+        if (recipientSelect.value === '__new__') {
+          newRecipientName.value = '';
+          newRecipientCode.value = '';
+          const res2 = await fetch(`${API_URL}?action=recipients&password=${encodeURIComponent(sessionPassword)}`);
+          const data2 = await res2.json();
+          if (data2.success) populateRecipients(data2.recipients);
+        }
+      } else {
+        adminAddStatus.textContent = data.error || 'Something went wrong.';
+        adminAddStatus.className = 'error';
+      }
+    } catch (err) {
+      adminAddStatus.textContent = 'Could not reach the letterbox server.';
+      adminAddStatus.className = 'error';
+    } finally {
+      addVideoBtn.disabled = false;
+    }
+  });
+
+  adminCloseBtn.addEventListener('click', () => {
+    adminPanel.classList.add('hidden');
+    sessionPassword = null;
+  });
+</script>
+
+</body>
+</html>
