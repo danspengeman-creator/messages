@@ -492,9 +492,6 @@
         your channel page, but anyone with the link can watch it, including this page.
       </p>
 
-      <label for="replySenderName">Your name</label>
-      <input id="replySenderName" placeholder="e.g. River" />
-
       <label for="replyYoutubeUrl">YouTube link (unlisted)</label>
       <input id="replyYoutubeUrl" placeholder="https://youtu.be/..." />
 
@@ -543,7 +540,6 @@
 
   const replyToggle = document.getElementById('replyToggle');
   const replyPanel = document.getElementById('replyPanel');
-  const replySenderName = document.getElementById('replySenderName');
   const replyYoutubeUrl = document.getElementById('replyYoutubeUrl');
   const replyVideoTitle = document.getElementById('replyVideoTitle');
   const replySubmitBtn = document.getElementById('replySubmitBtn');
@@ -796,13 +792,12 @@
 
   // ---------- Friend reply ----------
   replyToggle.addEventListener('click', () => {
-    replySenderName.value = '';
     replyYoutubeUrl.value = '';
     replyVideoTitle.value = '';
     replyStatus.textContent = '';
     replyStatus.className = '';
     replyPanel.classList.remove('hidden');
-    replySenderName.focus();
+    replyYoutubeUrl.focus();
   });
 
   replyCloseBtn.addEventListener('click', () => replyPanel.classList.add('hidden'));
@@ -824,13 +819,6 @@
       return;
     }
 
-    const sender = replySenderName.value.trim();
-    if (!sender) {
-      replyStatus.textContent = 'Enter your name so Lillian knows who this is from.';
-      replyStatus.className = 'error';
-      return;
-    }
-
     replySubmitBtn.disabled = true;
     replyStatus.textContent = 'Sending...';
 
@@ -841,7 +829,6 @@
         body: JSON.stringify({
           action: 'addReply',
           code: currentCode,
-          sender,
           youtubeId: id,
           title: replyVideoTitle.value.trim()
         })
