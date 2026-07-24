@@ -267,6 +267,29 @@
     padding: 30px 10px;
   }
 
+  .reply-btn {
+    display: block;
+    margin: 22px auto 0;
+    padding: 12px 20px;
+    border-radius: 6px;
+    border: 2px solid var(--rose);
+    background: transparent;
+    color: var(--parchment);
+    font-family: 'Karla', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .reply-btn:hover { background: rgba(217, 122, 147, 0.15); }
+  .reply-btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+  .postcard-sender {
+    font-size: 12.5px;
+    color: var(--rose-deep);
+    font-weight: 700;
+    margin: 4px 0 0;
+  }
+
   @keyframes riseIn {
     from { opacity: 0; transform: translateY(14px); }
     to { opacity: 1; transform: translateY(0); }
@@ -407,6 +430,7 @@
     <button id="backBtn">&larr; Try a different code</button>
     <h2 id="recipientHeading"></h2>
     <div id="videoList" class="postcard-stack"></div>
+    <button id="replyToggle" type="button" class="reply-btn">+ Reply with a video</button>
   </section>
 
   <footer>
@@ -456,9 +480,36 @@
     </div>
   </div>
 
+  <div id="replyPanel" class="modal hidden">
+    <div class="modal-content">
+      <h3>Reply with a video</h3>
+      <p class="field-hint" style="margin-top:-4px; margin-bottom:16px;">
+        Record your reply, upload it to YouTube as <strong>Unlisted</strong> (not Public,
+        not Private), then paste that link below. Unlisted keeps it out of search and off
+        your channel page, but anyone with the link can watch it, including this page.
+      </p>
+
+      <label for="replySenderName">Your name</label>
+      <input id="replySenderName" placeholder="e.g. River" />
+
+      <label for="replyYoutubeUrl">YouTube link (unlisted)</label>
+      <input id="replyYoutubeUrl" placeholder="https://youtu.be/..." />
+
+      <label for="replyVideoTitle">Title</label>
+      <input id="replyVideoTitle" placeholder="Pulled from YouTube automatically" />
+
+      <p id="replyStatus"></p>
+
+      <div class="modal-actions">
+        <button id="replyCloseBtn" type="button" class="secondary-btn">Close</button>
+        <button id="replySubmitBtn" type="button" class="primary-btn">Send reply</button>
+      </div>
+    </div>
+  </div>
+
 <script>
   // ------- Set this to your deployed Apps Script Web App URL -------
-  const API_URL = 'https://script.google.com/macros/s/AKfycbxxziIm21ywSbOUbpOioPUkS6xdBt7ikaSHXSwvd_ivCwoI9SLBZFmUY_DTxaYBfWje/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbxIzWWb0VEZz9jtqUxFtIQeBayBWoinzr_aSrEj3wGyvtbOVtK4CPkt2pBdX3zLP5bs/exec';
 
   const guestView = document.getElementById('guestView');
   const videosView = document.getElementById('videosView');
@@ -487,7 +538,17 @@
   const adminCloseBtn = document.getElementById('adminCloseBtn');
   const adminAddStatus = document.getElementById('adminAddStatus');
 
+  const replyToggle = document.getElementById('replyToggle');
+  const replyPanel = document.getElementById('replyPanel');
+  const replySenderName = document.getElementById('replySenderName');
+  const replyYoutubeUrl = document.getElementById('replyYoutubeUrl');
+  const replyVideoTitle = document.getElementById('replyVideoTitle');
+  const replySubmitBtn = document.getElementById('replySubmitBtn');
+  const replyCloseBtn = document.getElementById('replyCloseBtn');
+  const replyStatus = document.getElementById('replyStatus');
+
   let sessionPassword = null;
+  let currentCode = null;
 
   function extractYouTubeId(url) {
     const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
@@ -511,23 +572,28 @@
         return;
       }
 
-      showVideos(data.recipient, data.videos);
+      showVideos(code, data.recipient, data.videos);
     } catch (err) {
       guestError.textContent = "Something went wrong loading your letterbox. Please try again in a moment.";
       guestError.classList.remove('hidden');
     }
   });
 
-  function showVideos(recipient, videos) {
+  function showVideos(code, recipient, videos) {
+    currentCode = code;
     recipientHeading.textContent = `${recipient}'s Letterbox`;
     videoList.innerHTML = '';
 
     videos.forEach((v) => {
       const card = document.createElement('div');
       card.className = 'postcard';
+      const senderLine = v.sender && v.sender !== 'Lillian'
+        ? `<p class="postcard-sender">From ${escapeHtml(v.sender)}</p>`
+        : '';
       card.innerHTML = `
         <p class="postcard-title">${escapeHtml(v.title || 'A message from Lillian')}</p>
         <p class="postcard-date">${formatDate(v.dateAdded)}</p>
+        ${senderLine}
         <div class="postcard-media">
           <img src="https://img.youtube.com/vi/${v.youtubeId}/hqdefault.jpg" alt="" />
           <div class="play-overlay" role="button" tabindex="0" aria-label="Play video">
@@ -554,6 +620,7 @@
     guestView.classList.remove('hidden');
     codeInput.value = '';
     codeInput.focus();
+    currentCode = null;
   });
 
   function escapeHtml(str) {
@@ -630,20 +697,26 @@
   let oEmbedTimer = null;
   youtubeUrlInput.addEventListener('input', () => {
     clearTimeout(oEmbedTimer);
-    oEmbedTimer = setTimeout(fetchYouTubeTitle, 500);
+    oEmbedTimer = setTimeout(() => fetchYouTubeTitle(youtubeUrlInput, videoTitleInput), 500);
   });
 
-  async function fetchYouTubeTitle() {
-    const url = youtubeUrlInput.value.trim();
+  let replyOEmbedTimer = null;
+  replyYoutubeUrl.addEventListener('input', () => {
+    clearTimeout(replyOEmbedTimer);
+    replyOEmbedTimer = setTimeout(() => fetchYouTubeTitle(replyYoutubeUrl, replyVideoTitle), 500);
+  });
+
+  async function fetchYouTubeTitle(urlInput, titleInput) {
+    const url = urlInput.value.trim();
     const id = extractYouTubeId(url);
     if (!id) return;
     try {
       const res = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
       if (!res.ok) return;
       const data = await res.json();
-      if (data.title) videoTitleInput.value = data.title;
+      if (data.title) titleInput.value = data.title;
     } catch (err) {
-      // Silent fail is fine here; admin can type the title manually.
+      // Silent fail is fine here; the person can type the title manually.
     }
   }
 
@@ -716,6 +789,80 @@
   adminCloseBtn.addEventListener('click', () => {
     adminPanel.classList.add('hidden');
     sessionPassword = null;
+  });
+
+  // ---------- Friend reply ----------
+  replyToggle.addEventListener('click', () => {
+    replySenderName.value = '';
+    replyYoutubeUrl.value = '';
+    replyVideoTitle.value = '';
+    replyStatus.textContent = '';
+    replyStatus.className = '';
+    replyPanel.classList.remove('hidden');
+    replySenderName.focus();
+  });
+
+  replyCloseBtn.addEventListener('click', () => replyPanel.classList.add('hidden'));
+
+  replySubmitBtn.addEventListener('click', async () => {
+    replyStatus.textContent = '';
+    replyStatus.className = '';
+
+    if (!currentCode) {
+      replyStatus.textContent = 'Your code expired, please go back and enter it again.';
+      replyStatus.className = 'error';
+      return;
+    }
+
+    const id = extractYouTubeId(replyYoutubeUrl.value.trim());
+    if (!id) {
+      replyStatus.textContent = "That doesn't look like a valid YouTube link.";
+      replyStatus.className = 'error';
+      return;
+    }
+
+    const sender = replySenderName.value.trim();
+    if (!sender) {
+      replyStatus.textContent = 'Enter your name so Lillian knows who this is from.';
+      replyStatus.className = 'error';
+      return;
+    }
+
+    replySubmitBtn.disabled = true;
+    replyStatus.textContent = 'Sending...';
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'addReply',
+          code: currentCode,
+          sender,
+          youtubeId: id,
+          title: replyVideoTitle.value.trim()
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        replyStatus.textContent = 'Sent! Closing...';
+        replyStatus.className = 'success';
+        const lookupRes = await fetch(`${API_URL}?action=lookup&code=${encodeURIComponent(currentCode)}`);
+        const lookupData = await lookupRes.json();
+        if (lookupData.success) {
+          showVideos(currentCode, lookupData.recipient, lookupData.videos);
+        }
+        setTimeout(() => replyPanel.classList.add('hidden'), 700);
+      } else {
+        replyStatus.textContent = data.error || 'Something went wrong.';
+        replyStatus.className = 'error';
+      }
+    } catch (err) {
+      replyStatus.textContent = 'Could not reach the letterbox server.';
+      replyStatus.className = 'error';
+    } finally {
+      replySubmitBtn.disabled = false;
+    }
   });
 </script>
 
