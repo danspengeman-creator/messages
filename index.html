@@ -332,6 +332,79 @@
   .reply-btn:hover { background: rgba(217, 122, 147, 0.15); }
   .reply-btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 
+  .notify-block {
+    margin-top: 18px;
+    background: rgba(242, 232, 217, 0.08);
+    border: 1px solid rgba(242, 232, 217, 0.2);
+    border-radius: 8px;
+    padding: 16px 18px;
+  }
+
+  .notify-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--parchment);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .notify-checkbox-label input[type="checkbox"] {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--gold);
+    cursor: pointer;
+  }
+
+  #notifyEmail {
+    width: 100%;
+    margin-top: 12px;
+    padding: 10px 12px;
+    border: 2px solid rgba(242, 232, 217, 0.22);
+    background: #fff;
+    border-radius: 6px;
+    font-family: 'Karla', sans-serif;
+    font-size: 13.5px;
+    color: var(--night-deep);
+  }
+
+  #notifyEmail:focus {
+    outline: 3px solid var(--gold);
+    outline-offset: 1px;
+    border-color: var(--gold);
+  }
+
+  .notify-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .notify-save-btn {
+    padding: 9px 18px;
+    border: none;
+    border-radius: 6px;
+    background: var(--gold-deep);
+    color: var(--night-deep);
+    font-family: 'Karla', sans-serif;
+    font-weight: 700;
+    font-size: 13.5px;
+    cursor: pointer;
+  }
+  .notify-save-btn:hover { background: var(--gold); }
+  .notify-save-btn:focus-visible { outline: 3px solid var(--parchment); outline-offset: 2px; }
+
+  #notifyStatus {
+    font-size: 12.5px;
+    margin: 0;
+    color: var(--parchment);
+    opacity: 0.85;
+  }
+  #notifyStatus.error { color: #E8998A; opacity: 1; }
+  #notifyStatus.success { color: #9FD6B8; opacity: 1; }
+
   .postcard-sender {
     font-size: 12.5px;
     color: var(--rose-deep);
@@ -480,6 +553,18 @@
     <h2 id="recipientHeading"></h2>
     <div id="videoList" class="postcard-stack"></div>
     <button id="replyToggle" type="button" class="reply-btn">+ Reply with a video</button>
+
+    <div class="notify-block">
+      <label class="notify-checkbox-label">
+        <input type="checkbox" id="notifySubscribe" />
+        Email me when Lillian posts a new video
+      </label>
+      <input id="notifyEmail" type="email" autocomplete="off" placeholder="your@email.com" />
+      <div class="notify-row">
+        <button id="notifySaveBtn" type="button" class="notify-save-btn">Save</button>
+        <p id="notifyStatus"></p>
+      </div>
+    </div>
   </section>
 
   <footer>
@@ -555,7 +640,7 @@
 
 <script>
   // ------- Set this to your deployed Apps Script Web App URL -------
-  const API_URL = 'https://script.google.com/macros/s/AKfycbzu11S-xWgoeHmL3Mhvo_D5602kFIMth2yELR6WILf80PphuIAC9L4u5KL56MUPK0i5/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbyWKjYZGa8tZf4OVDBgvoBuU9eJ_ob4EyTP1sU6nXNyhsb98aNXJSRBi-2R9XoV5-bO/exec';
 
   const guestView = document.getElementById('guestView');
   const videosView = document.getElementById('videosView');
@@ -592,6 +677,11 @@
   const replyCloseBtn = document.getElementById('replyCloseBtn');
   const replyStatus = document.getElementById('replyStatus');
 
+  const notifySubscribe = document.getElementById('notifySubscribe');
+  const notifyEmail = document.getElementById('notifyEmail');
+  const notifySaveBtn = document.getElementById('notifySaveBtn');
+  const notifyStatus = document.getElementById('notifyStatus');
+
   let sessionPassword = null;
   let currentCode = null;
 
@@ -618,6 +708,7 @@
       }
 
       showVideos(code, data.recipient, data.videos);
+      loadSubscription(code);
     } catch (err) {
       guestError.textContent = "Something went wrong loading your letterbox. Please try again in a moment.";
       guestError.classList.remove('hidden');
@@ -666,6 +757,76 @@
     codeInput.value = '';
     codeInput.focus();
     currentCode = null;
+    notifySubscribe.checked = false;
+    notifyEmail.value = '';
+    notifyStatus.textContent = '';
+    notifyStatus.className = '';
+  });
+
+  // ---------- Email notification preferences ----------
+  async function loadSubscription(code) {
+    notifyStatus.textContent = '';
+    notifyStatus.className = '';
+    try {
+      const res = await fetch(`${API_URL}?action=getSubscription&code=${encodeURIComponent(code)}`);
+      const data = await res.json();
+      if (data.success) {
+        notifySubscribe.checked = Boolean(data.subscribed);
+        notifyEmail.value = data.email || '';
+      }
+    } catch (err) {
+      // Preferences just won't be pre-filled; the person can still set them.
+    }
+  }
+
+  notifySaveBtn.addEventListener('click', async () => {
+    notifyStatus.textContent = '';
+    notifyStatus.className = '';
+
+    if (!currentCode) {
+      notifyStatus.textContent = 'Your code expired, please go back and enter it again.';
+      notifyStatus.className = 'error';
+      return;
+    }
+
+    const subscribed = notifySubscribe.checked;
+    const email = notifyEmail.value.trim();
+
+    if (subscribed && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      notifyStatus.textContent = 'Enter a valid email address.';
+      notifyStatus.className = 'error';
+      return;
+    }
+
+    notifySaveBtn.disabled = true;
+    notifyStatus.textContent = 'Saving...';
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'updateSubscription',
+          code: currentCode,
+          subscribed,
+          email
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (!subscribed) notifyEmail.value = '';
+        notifyStatus.textContent = subscribed ? 'Saved. You\'ll get an email for new videos.' : 'Saved. Notifications are off.';
+        notifyStatus.className = 'success';
+      } else {
+        notifyStatus.textContent = data.error || 'Something went wrong.';
+        notifyStatus.className = 'error';
+      }
+    } catch (err) {
+      notifyStatus.textContent = 'Could not reach the letterbox server.';
+      notifyStatus.className = 'error';
+    } finally {
+      notifySaveBtn.disabled = false;
+    }
   });
 
   function escapeHtml(str) {
