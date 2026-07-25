@@ -318,7 +318,7 @@
 
   .reply-btn {
     display: block;
-    margin: 22px auto 0;
+    margin: 0 auto;
     padding: 12px 20px;
     border-radius: 6px;
     border: 2px solid var(--rose);
@@ -333,7 +333,8 @@
   .reply-btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 
   .notify-block {
-    margin-top: 18px;
+    margin-top: 16px;
+    margin-bottom: 26px;
     background: rgba(242, 232, 217, 0.08);
     border: 1px solid rgba(242, 232, 217, 0.2);
     border-radius: 8px;
@@ -551,7 +552,7 @@
   <section id="videosView" class="hidden">
     <button id="backBtn">&larr; Try a different code</button>
     <h2 id="recipientHeading"></h2>
-    <div id="videoList" class="postcard-stack"></div>
+
     <button id="replyToggle" type="button" class="reply-btn">+ Reply with a video</button>
 
     <div class="notify-block">
@@ -565,6 +566,8 @@
         <p id="notifyStatus"></p>
       </div>
     </div>
+
+    <div id="videoList" class="postcard-stack"></div>
   </section>
 
   <footer>
@@ -723,9 +726,7 @@
     videos.forEach((v) => {
       const card = document.createElement('div');
       card.className = 'postcard';
-      const senderLine = v.sender && v.sender !== 'Lillian'
-        ? `<p class="postcard-sender">From ${escapeHtml(v.sender)}</p>`
-        : '';
+      const senderLine = `<p class="postcard-sender">From ${escapeHtml(v.sender || 'Lillian')}</p>`;
       card.innerHTML = `
         <p class="postcard-title">${escapeHtml(v.title || 'A message from Lillian')}</p>
         <p class="postcard-date">${formatDate(v.dateAdded)}</p>
